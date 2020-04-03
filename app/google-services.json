@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "184186505141",
+    "firebase_url": "https://corona-shit.firebaseio.com",
+    "project_id": "corona-shit",
+    "storage_bucket": "corona-shit.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:184186505141:android:336181b3af529221bc3bfc",
+        "android_client_info": {
+          "package_name": "com.initpoint.coroshit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "184186505141-h2vdbugh50j3e67ve3s7g2qaj94h0tm7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.initpoint.coroshit",
+            "certificate_hash": "0dd19b2a65e5130e872f2e8ac05ac35bb4218074"
+          }
+        },
+        {
+          "client_id": "184186505141-ksfdoiu4m18vm3p3p6srlbhhli0bubcg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbPdoMwHxKtGmonH0Pm-QsdBBvgeD5kjg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "184186505141-ksfdoiu4m18vm3p3p6srlbhhli0bubcg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
