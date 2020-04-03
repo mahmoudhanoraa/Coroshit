@@ -17,4 +17,4 @@ This app does not require registration, and only saves you location history loca
   You should see the background color of the QRcode on device B turning to yellow, if the two devices were near each other at step 1.
 - We need to write test cases for the current functionality. 
 
-if you think you are able to help send an email to mahmoudhanora.mh@gmail.com
+if you think you are able to help send an email to hanora@coroshit.com
