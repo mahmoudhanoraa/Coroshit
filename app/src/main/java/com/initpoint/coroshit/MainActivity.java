@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     Intent intent = new Intent(MainActivity.this, LocationTrackerService.class);
                     stopService(intent);
-                    String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+                    String date = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(new Date());
                     List<String> allKeys = Paper.book(date).getAllKeys();
                     Log.d("location", "locations saved " + allKeys.size());
                 }

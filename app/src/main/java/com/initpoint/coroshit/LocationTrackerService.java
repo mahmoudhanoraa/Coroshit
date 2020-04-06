@@ -88,7 +88,7 @@ public class LocationTrackerService extends Service {
                         lastLoc[0] = location;
 //                    float [] results = new float[3];
 //                    Location.distanceBetween(location.getLatitude(), location.getLongitude(), lastLoc[0].getLatitude(), lastLoc[0].getLongitude(),results );
-                    final String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+                    final String date = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(new Date());
 
                     new Thread(new Runnable() {
                         public void run() {
@@ -105,7 +105,7 @@ public class LocationTrackerService extends Service {
                                     allDays.add(date);
                                 } else {
                                     List<Date> allDates = new ArrayList<>();
-                                    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd",  Locale.getDefault());
+                                    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd",  Locale.ENGLISH);
                                     for (String day : allDays) {
                                         try {
                                              allDates.add(formatter.parse(day));
@@ -114,7 +114,7 @@ public class LocationTrackerService extends Service {
                                         }
                                     }
                                     Date oldDate = Collections.min(allDates);
-                                    String oldDateStr = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(oldDate);
+                                    String oldDateStr = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(oldDate);
                                     allDays.remove(oldDateStr);
                                     Paper.book(oldDateStr).destroy();
                                     allDays.add(date);
