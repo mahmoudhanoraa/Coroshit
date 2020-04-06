@@ -266,17 +266,19 @@ public class MainActivity extends AppCompatActivity {
                 for (DataSnapshot caseSnapshot : dataSnapshot.getChildren()) {
                     for (String dayStr : allDays) {
                         ArrayList<LocationToSave> locations = getLocations(dayStr);
+                        Long patient_timestamp = (Long) caseSnapshot.child("timestamp").getValue();
+                        Paper.book().write("last-updated-timestamp", patient_timestamp);
                         for (DataSnapshot location : caseSnapshot.child(dayStr).getChildren()) {
                             for (LocationToSave loc : locations) {
                                 Double lat = Double.valueOf(location.child("Lat").getValue().toString());
                                 Double lon = Double.valueOf(location.child("Long").getValue().toString());
                                 Long timestamp = Long.valueOf(location.getKey());
-                                Paper.book().write("last-updated-timestamp", timestamp);
                                 Log.d("test", String.valueOf(possibleInfection(loc, new LocationToSave(lat, lon, timestamp))));
                                 if (possibleInfection(loc, new LocationToSave(lat, lon, timestamp))) {
                                     Bitmap qrCode = QRCode.from(auth.getCurrentUser().getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
                                     qrCodeTV.setImageBitmap(qrCode);
-
+                                    progress.dismiss();
+                                    return;
                                 }
                             }
                         }
