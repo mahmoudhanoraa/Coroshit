@@ -9,8 +9,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private int YELLOW = 0xFFffbe4f;
     private FirebaseDatabase realtimeDatabase;
     private DatabaseReference rtDatabaseReference;
+    private Switch service_btn ;
     ProgressDialog progress;
 
     @Override
@@ -61,30 +65,30 @@ public class MainActivity extends AppCompatActivity {
         rtDatabaseReference = realtimeDatabase.getReference();
         progress = new ProgressDialog(this);
 
+        service_btn = (Switch) findViewById(R.id.service_btn);
+
+
+        service_btn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if(b){
+                    Intent intent = new Intent(MainActivity.this, LocationTrackerService.class);
+                    startService(intent);
+                }
+                else {
+                    Intent intent = new Intent(MainActivity.this, LocationTrackerService.class);
+                    stopService(intent);
+                    String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+                    List<String> allKeys = Paper.book(date).getAllKeys();
+                    Log.d("location", "locations saved " + allKeys.size());
+                }
+            }
+        });
+
+
 
         Paper.init(this);
 
-
-        Button btn = findViewById(R.id.button);
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, LocationTrackerService.class);
-                startService(intent);
-            }
-        });
-
-        Button btn1 = findViewById(R.id.button2);
-        btn1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, LocationTrackerService.class);
-                stopService(intent);
-                String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-                List<String> allKeys = Paper.book(date).getAllKeys();
-                Log.d("location", "locations saved " + allKeys.size());
-            }
-        });
 
         Button btn2 = findViewById(R.id.button3);
         btn2.setOnClickListener(new View.OnClickListener() {
