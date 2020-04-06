@@ -277,8 +277,8 @@ public class MainActivity extends AppCompatActivity {
                                 if (possibleInfection(loc, new LocationToSave(lat, lon, timestamp))) {
                                     Bitmap qrCode = QRCode.from(auth.getCurrentUser().getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
                                     qrCodeTV.setImageBitmap(qrCode);
-                                    progress.dismiss();
-                                    return;
+//                                    progress.dismiss();
+//                                    return;
                                 }
                             }
                         }
