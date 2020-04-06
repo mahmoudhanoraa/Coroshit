@@ -259,6 +259,7 @@ public class MainActivity extends AppCompatActivity {
         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
         progress.show();
         long lastSyncTimestamp = Paper.book().read("last-updated-timestamp", 0L);
+        Log.d("TEST", String.valueOf(lastSyncTimestamp));
         rtDatabaseReference.child("confirmed-cases").orderByChild("timestamp").startAt(lastSyncTimestamp + 1).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -267,6 +268,7 @@ public class MainActivity extends AppCompatActivity {
                     for (String dayStr : allDays) {
                         ArrayList<LocationToSave> locations = getLocations(dayStr);
                         Long patient_timestamp = (Long) caseSnapshot.child("timestamp").getValue();
+                        Log.d("TEST", String.valueOf(patient_timestamp));
                         Paper.book().write("last-updated-timestamp", patient_timestamp);
                         for (DataSnapshot location : caseSnapshot.child(dayStr).getChildren()) {
                             for (LocationToSave loc : locations) {
@@ -277,12 +279,12 @@ public class MainActivity extends AppCompatActivity {
                                 if (possibleInfection(loc, new LocationToSave(lat, lon, timestamp))) {
                                     Bitmap qrCode = QRCode.from(auth.getCurrentUser().getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
                                     qrCodeTV.setImageBitmap(qrCode);
-//                                    progress.dismiss();
-//                                    return;
+                                    progress.dismiss();
+                                    return;
                                 }
                             }
                         }
-                        ;
+                            
                     }
                 }
                 progress.dismiss();
