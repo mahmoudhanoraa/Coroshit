@@ -1,5 +1,5 @@
-package com.initpoint.coroshit;
+//package com.initpoint.coroshit;
 
-public class UserState {
-    public
-}
+//public class UserState {
+//    public
+//}
