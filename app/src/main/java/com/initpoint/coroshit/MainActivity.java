@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseDatabase realtimeDatabase;
     private DatabaseReference rtDatabaseReference;
     private Switch service_btn ;
+    private Boolean infected ;
     ProgressDialog progress;
 
     @Override
@@ -64,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
         realtimeDatabase = FirebaseDatabase.getInstance();
         rtDatabaseReference = realtimeDatabase.getReference();
         progress = new ProgressDialog(this);
-
+        infected = false ;
         service_btn = (Switch) findViewById(R.id.service_btn);
 
 
@@ -94,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
         btn2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                infected = !infected ;
                 changeStatus(auth.getCurrentUser());
             }
         });
@@ -193,8 +195,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void changeStatus(FirebaseUser user) {
+        Bitmap qrCode ;
         if (user != null) {
-            Bitmap qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
+            if(infected){
+                qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
+            }
+            else {
+                qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(BLACK, 0xFFFFFFFF).bitmap();
+            }
+            //Bitmap qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
             qrCodeTV.setImageBitmap(qrCode);
             List<String> allDays = Paper.book("days").read("availableDays", new ArrayList<String>());
             String autoGenKey = rtDatabaseReference.child("confirmed-cases").push().getKey();
