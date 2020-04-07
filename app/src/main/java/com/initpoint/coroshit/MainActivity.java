@@ -188,8 +188,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateUI(FirebaseUser user) {
+        Bitmap qrCode ;
         if (user != null) {
-            Bitmap qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(BLACK, 0xFFFFFFFF).bitmap();
+            Boolean user_status = Paper.book("user_status").read("user_status",false);
+            if(user_status){
+                qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
+            }
+            else {
+                qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(BLACK, 0xFFFFFFFF).bitmap();
+            }
+
             qrCodeTV.setImageBitmap(qrCode);
         }
     }
@@ -199,9 +207,11 @@ public class MainActivity extends AppCompatActivity {
         if (user != null) {
             if(infected){
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
+                Paper.book("user_status").write("user_status",true);
             }
             else {
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(BLACK, 0xFFFFFFFF).bitmap();
+                Paper.book("user_status").write("user_status",false);
             }
             //Bitmap qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
             qrCodeTV.setImageBitmap(qrCode);
