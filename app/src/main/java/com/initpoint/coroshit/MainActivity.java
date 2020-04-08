@@ -2,10 +2,15 @@ package com.initpoint.coroshit;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.ResultReceiver;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -46,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth auth;
     private static String AUTH_TAG = "auth";
     private ImageView qrCodeTV;
+    private Button btn3 ;
     private static int PERMISSION_REQUEST_CODE = 123;
     private int RED = 0xFFFF0000;
     private int BLACK = 0xFF000000;
@@ -55,11 +61,24 @@ public class MainActivity extends AppCompatActivity {
     private Switch service_btn ;
     private Boolean infected ;
     ProgressDialog progress;
+    Handler handler = new Handler();
+
+    public FirebaseAuth getAuth() {
+        auth = FirebaseAuth.getInstance();
+        return auth;
+    }
+
+    public DatabaseReference getRtDatabaseReference() {
+        realtimeDatabase = FirebaseDatabase.getInstance();
+        rtDatabaseReference = realtimeDatabase.getReference();
+        return rtDatabaseReference;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Paper.init(this);
         qrCodeTV = findViewById(R.id.qr_code);
         auth = FirebaseAuth.getInstance();
         realtimeDatabase = FirebaseDatabase.getInstance();
@@ -67,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
         progress = new ProgressDialog(this);
         infected = false ;
         service_btn = (Switch) findViewById(R.id.service_btn);
+        service_btn.setChecked(Paper.book().read("sercive_btn_state",false));
 
 
         service_btn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -75,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
                 if(b){
                     Intent intent = new Intent(MainActivity.this, LocationTrackerService.class);
                     startService(intent);
+                    Paper.book().write("sercive_btn_state",true);
                 }
                 else {
                     Intent intent = new Intent(MainActivity.this, LocationTrackerService.class);
@@ -82,13 +103,15 @@ public class MainActivity extends AppCompatActivity {
                     String date = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(new Date());
                     List<String> allKeys = Paper.book(date).getAllKeys();
                     Log.d("location", "locations saved " + allKeys.size());
+                    Paper.book().write("sercive_btn_state",false);
                 }
             }
         });
 
 
 
-        Paper.init(this);
+
+
 
 
         Button btn2 = findViewById(R.id.button3);
@@ -99,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
                 changeStatus(auth.getCurrentUser());
             }
         });
-        Button btn3 = findViewById(R.id.button4);
+        btn3 = findViewById(R.id.button4);
         btn3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -165,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void signInUseresAnonymously() {
         auth.signInAnonymously()
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -187,15 +211,22 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    private void updateUI(FirebaseUser user) {
+    public void updateUI(FirebaseUser user) {
         Bitmap qrCode ;
         if (user != null) {
-            Boolean user_status = Paper.book("user_status").read("user_status",false);
-            if(user_status){
+            String user_status = Paper.book("user_status").read("user_status","not_infected");
+            if(user_status.equals("infected")){
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
             }
-            else {
+            else if(user_status.equals("not_infected")) {
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(BLACK, 0xFFFFFFFF).bitmap();
+            }
+
+            else {
+                qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
+                Paper.book("user_status").write("user_status","not_infected");
+
+
             }
 
             qrCodeTV.setImageBitmap(qrCode);
@@ -207,13 +238,13 @@ public class MainActivity extends AppCompatActivity {
         if (user != null) {
             if(infected){
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
-                Paper.book("user_status").write("user_status",true);
+                Paper.book("user_status").write("user_status","infected");
             }
             else {
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(BLACK, 0xFFFFFFFF).bitmap();
-                Paper.book("user_status").write("user_status",false);
+                Paper.book("user_status").write("user_status","not_infected");
             }
-            //Bitmap qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
+
             qrCodeTV.setImageBitmap(qrCode);
             List<String> allDays = Paper.book("days").read("availableDays", new ArrayList<String>());
             String autoGenKey = rtDatabaseReference.child("confirmed-cases").push().getKey();
@@ -264,49 +295,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sync() {
-        progress.setTitle("Loading");
-        progress.setMessage("Wait while loading...");
-        progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-        progress.show();
-        long lastSyncTimestamp = Paper.book().read("last-updated-timestamp", 0L);
-        Log.d("TEST", String.valueOf(lastSyncTimestamp));
-        rtDatabaseReference.child("confirmed-cases").orderByChild("timestamp").startAt(lastSyncTimestamp + 1).addListenerForSingleValueEvent(new ValueEventListener() {
+          btn3.setEnabled(false);
+          Intent sync_service = new Intent(MainActivity.this,SyncService.class);
+          ResultReceiver result_receiver = new MyReciever(null);
+          sync_service.putExtra("reciever",result_receiver);
+          startService(sync_service);
+//
+        }
+        public class MyReciever extends ResultReceiver{
+
+            public MyReciever(Handler handler) {
+                super(handler);
+            }
+
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                List<String> allDays = Paper.book("days").read("availableDays", new ArrayList<String>());
-                for (DataSnapshot caseSnapshot : dataSnapshot.getChildren()) {
-                    for (String dayStr : allDays) {
-                        ArrayList<LocationToSave> locations = getLocations(dayStr);
-                        Long patient_timestamp = (Long) caseSnapshot.child("timestamp").getValue();
-                        Log.d("TEST", String.valueOf(patient_timestamp));
-                        Paper.book().write("last-updated-timestamp", patient_timestamp);
-                        for (DataSnapshot location : caseSnapshot.child(dayStr).getChildren()) {
-                            for (LocationToSave loc : locations) {
-                                Double lat = Double.valueOf(location.child("Lat").getValue().toString());
-                                Double lon = Double.valueOf(location.child("Long").getValue().toString());
-                                Long timestamp = Long.valueOf(location.getKey());
-                                Log.d("test", String.valueOf(possibleInfection(loc, new LocationToSave(lat, lon, timestamp))));
-                                if (possibleInfection(loc, new LocationToSave(lat, lon, timestamp))) {
-                                    Bitmap qrCode = QRCode.from(auth.getCurrentUser().getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
-                                    qrCodeTV.setImageBitmap(qrCode);
-                                    progress.dismiss();
-                                    return;
-                                }
-                            }
-                        }
-                            
+            protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        btn3.setEnabled(true);
+                        Log.i("Handlerrr","Handler works");
+                        FirebaseUser currentUser = auth.getCurrentUser();
+                        updateUI(currentUser);
                     }
-                }
-                progress.dismiss();
+                });
+                super.onReceiveResult(resultCode, resultData);
 
             }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        }
 
     }
-}
+
+
 
