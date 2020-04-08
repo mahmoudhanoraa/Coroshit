@@ -16,6 +16,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -24,6 +25,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -52,9 +54,11 @@ public class MainActivity extends AppCompatActivity {
     private int YELLOW = 0xFFffbe4f;
     private FirebaseDatabase realtimeDatabase;
     private DatabaseReference rtDatabaseReference;
-    private Switch service_btn ;
-    private Boolean infected ;
+    private Switch service_btn;
     ProgressDialog progress;
+    Boolean eventFlag = false;
+
+    Button btn3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,18 +69,16 @@ public class MainActivity extends AppCompatActivity {
         realtimeDatabase = FirebaseDatabase.getInstance();
         rtDatabaseReference = realtimeDatabase.getReference();
         progress = new ProgressDialog(this);
-        infected = false ;
-        service_btn = (Switch) findViewById(R.id.service_btn);
+        service_btn = findViewById(R.id.service_btn);
 
 
         service_btn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if(b){
+                if (b) {
                     Intent intent = new Intent(MainActivity.this, LocationTrackerService.class);
                     startService(intent);
-                }
-                else {
+                } else {
                     Intent intent = new Intent(MainActivity.this, LocationTrackerService.class);
                     stopService(intent);
                     String date = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(new Date());
@@ -87,19 +89,19 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
         Paper.init(this);
 
 
-        Button btn2 = findViewById(R.id.button3);
-        btn2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                infected = !infected ;
-                changeStatus(auth.getCurrentUser());
-            }
-        });
-        Button btn3 = findViewById(R.id.button4);
+//        Button btn2 = findViewById(R.id.button3);
+//        btn2.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                changeStatus(auth.getCurrentUser());
+//            }
+//        });
+//        btn2.setVisibility(View.GONE);
+
+        btn3 = findViewById(R.id.button4);
         btn3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -160,9 +162,45 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "User is logged in",
                     Toast.LENGTH_SHORT).show();
             updateUI(currentUser);
+            rtDatabaseReference.child(auth.getCurrentUser().getUid()).addChildEventListener(new ChildEventListener() {
+                @Override
+                public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                    if(!eventFlag){
+                        Log.d("FLAG","Added");
+                        int user_status = Paper.book("user_status").read("user_status", 0);
+                        if(user_status != 2){
+                            changeStatus(auth.getCurrentUser());
+                        }
+                        eventFlag = true;
+                    }
+                }
+
+                @Override
+                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                    Log.d("FLAG","Changed");
+
+                }
+
+                @Override
+                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+                    Log.d("FLAG","Removed");
+
+                }
+
+                @Override
+                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                    Log.d("FLAG","Moved");
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
         } else {
             signInUseresAnonymously();
         }
+
     }
 
     private void signInUseresAnonymously() {
@@ -175,6 +213,42 @@ public class MainActivity extends AppCompatActivity {
                             Log.d(AUTH_TAG, "signInAnonymously:success");
                             FirebaseUser user = auth.getCurrentUser();
                             updateUI(user);
+                            rtDatabaseReference.child(auth.getCurrentUser().getUid()).addChildEventListener(new ChildEventListener() {
+                                @Override
+                                public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                                    if(!eventFlag){
+                                        Log.d("FLAG","Added");
+                                        int user_status = Paper.book("user_status").read("user_status", 0);
+                                        if(user_status != 2){
+                                            changeStatus(auth.getCurrentUser());
+                                        }
+                                        eventFlag = true;
+                                    }
+                                }
+
+                                @Override
+                                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                                    Log.d("FLAG","Changed");
+
+                                }
+
+                                @Override
+                                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+                                    Log.d("FLAG","Removed");
+
+                                }
+
+                                @Override
+                                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                                    Log.d("FLAG","Moved");
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                            });
+
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(AUTH_TAG, "signInAnonymously:failure", task.getException());
@@ -188,14 +262,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateUI(FirebaseUser user) {
-        Bitmap qrCode ;
+        Bitmap qrCode;
         if (user != null) {
-            Boolean user_status = Paper.book("user_status").read("user_status",false);
-            if(user_status){
+            int user_status = Paper.book("user_status").read("user_status", 0);
+            if (user_status == 2) {
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
-            }
-            else {
+            } else if (user_status == 0) {
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(BLACK, 0xFFFFFFFF).bitmap();
+            } else {
+                qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
             }
 
             qrCodeTV.setImageBitmap(qrCode);
@@ -203,16 +278,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void changeStatus(FirebaseUser user) {
-        Bitmap qrCode ;
+        Bitmap qrCode;
         if (user != null) {
-            if(infected){
-                qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
-                Paper.book("user_status").write("user_status",true);
-            }
-            else {
-                qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(BLACK, 0xFFFFFFFF).bitmap();
-                Paper.book("user_status").write("user_status",false);
-            }
+            qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
+            Paper.book("user_status").write("user_status", 2);
             //Bitmap qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
             qrCodeTV.setImageBitmap(qrCode);
             List<String> allDays = Paper.book("days").read("availableDays", new ArrayList<String>());
@@ -240,6 +309,8 @@ public class MainActivity extends AppCompatActivity {
             }
             childUpdates.put("confirmed-cases/" + autoGenKey + "/timestamp", unixTime);
             rtDatabaseReference.updateChildren(childUpdates);
+            btn3.setVisibility(View.GONE);
+            service_btn.setVisibility(View.GONE);
         }
     }
 
@@ -289,12 +360,13 @@ public class MainActivity extends AppCompatActivity {
                                 if (possibleInfection(loc, new LocationToSave(lat, lon, timestamp))) {
                                     Bitmap qrCode = QRCode.from(auth.getCurrentUser().getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
                                     qrCodeTV.setImageBitmap(qrCode);
+                                    Paper.book("user_status").write("user_status", 1);
                                     progress.dismiss();
                                     return;
                                 }
                             }
                         }
-                            
+
                     }
                 }
                 progress.dismiss();
