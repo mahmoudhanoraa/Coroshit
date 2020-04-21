@@ -9,11 +9,16 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -29,7 +34,8 @@ import io.paperdb.Paper;
 public class Fcmhandler extends  FirebaseMessagingService {
     private DatabaseReference rtDatabaseReference;
     private FirebaseDatabase realtimeDatabase;
-
+    private FirebaseAuth auth;
+    String registration_id="";
     public Fcmhandler() {
     }
 
@@ -70,6 +76,7 @@ public class Fcmhandler extends  FirebaseMessagingService {
                                 Log.d("test", String.valueOf(possibleInfection(loc, new LocationToSave(lat, lon, timestamp))));
                                 if (possibleInfection(loc, new LocationToSave(lat, lon, timestamp))) {
                                     Paper.book("user_status").write("user_status", 1);
+                                        getNotificationId();
                                     return;
                                 }
                             }
@@ -105,5 +112,27 @@ public class Fcmhandler extends  FirebaseMessagingService {
     private boolean possibleInfection(LocationToSave loc1, LocationToSave loc2) {
         return LocationToSave.distanceBetween(loc1, loc2) < 1000 && Math.abs(loc1.getTimestamp() - loc2.getTimestamp()) < 14400000;
     }
+    private void  getNotificationId(){
+        FirebaseInstanceId.getInstance().getInstanceId()
+                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                        if (!task.isSuccessful()) {
+                            Log.w("registrationID", "getInstanceId failed", task.getException());
+                            return;
+                        }
+
+                        // Get new Instance ID token
+                        registration_id = task.getResult().getToken();
+                        DatabaseReference myRef = realtimeDatabase.getReference(auth.getCurrentUser().getUid()).child("registration_id");
+                        myRef.setValue(registration_id);
+                        // Log and toast
+//                        String msg = getString(R.string.msg_token_fmt, token);
+                        Log.d("registrationID", registration_id);
+
+                    }
+                });
+    }
 }
+
 

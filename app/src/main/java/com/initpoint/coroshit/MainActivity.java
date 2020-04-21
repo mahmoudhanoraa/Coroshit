@@ -160,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         // Check if user is signed in (non-null) and update UI accordingly.
         FirebaseUser currentUser = auth.getCurrentUser();
-
         if (currentUser != null) {
             Toast.makeText(MainActivity.this, "User is logged in",
                     Toast.LENGTH_SHORT).show();
@@ -204,23 +203,7 @@ public class MainActivity extends AppCompatActivity {
             signInUseresAnonymously();
         }
 
-        FirebaseInstanceId.getInstance().getInstanceId()
-                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                        if (!task.isSuccessful()) {
-                            Log.w("registrationID", "getInstanceId failed", task.getException());
-                            return;
-                        }
 
-                        // Get new Instance ID token
-                        String token = task.getResult().getToken();
-
-                        // Log and toast
-//                        String msg = getString(R.string.msg_token_fmt, token);
-                        Log.d("registrationID", token);
-                    }
-                });
 
     }
 
@@ -382,6 +365,7 @@ public class MainActivity extends AppCompatActivity {
                                     Bitmap qrCode = QRCode.from(auth.getCurrentUser().getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
                                     qrCodeTV.setImageBitmap(qrCode);
                                     Paper.book("user_status").write("user_status", 1);
+                                    getNotificationId();
                                     progress.dismiss();
                                     return;
                                 }
@@ -401,5 +385,26 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
+
+    private void  getNotificationId(){
+        FirebaseInstanceId.getInstance().getInstanceId()
+                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                        if (!task.isSuccessful()) {
+                            Log.w("registrationID", "getInstanceId failed", task.getException());
+                            return;
+                        }
+
+                        String registration_id = task.getResult().getToken();
+                        DatabaseReference myRef = realtimeDatabase.getReference(auth.getCurrentUser().getUid()).child("registration_id");
+                        myRef.setValue(registration_id);
+                        // Log and toast
+//                        String msg = getString(R.string.msg_token_fmt, token);
+                        Log.d("registrationID", registration_id);
+                    }
+                });
+    }
 }
+
 
