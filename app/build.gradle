@@ -33,5 +33,7 @@ dependencies {
     implementation 'io.paperdb:paperdb:2.6'
     implementation 'com.google.firebase:firebase-database:19.2.1'
     implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.google.firebase:firebase-messaging:20.1.5'
+
 
 }
