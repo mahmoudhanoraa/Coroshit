@@ -1,7 +1,9 @@
 package com.initpoint.coroshit;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -13,7 +15,6 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,6 +23,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -33,6 +35,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
+import com.yinglan.shadowimageview.ShadowImageView;
 
 import net.glxn.qrgen.android.QRCode;
 
@@ -49,7 +52,7 @@ import io.paperdb.Paper;
 public class MainActivity extends AppCompatActivity {
     private FirebaseAuth auth;
     private static String AUTH_TAG = "auth";
-    private ImageView qrCodeTV;
+    private ShadowImageView qrCodeTV;
     private static int PERMISSION_REQUEST_CODE = 123;
     private int RED = 0xFFFF0000;
     private int BLACK = 0xFF000000;
@@ -59,19 +62,41 @@ public class MainActivity extends AppCompatActivity {
     private Switch service_btn;
     ProgressDialog progress;
     Boolean eventFlag = false;
-
     Button btn3;
+    Bitmap qrCode;
+    FloatingActionButton scan_btn ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        qrCodeTV = findViewById(R.id.qr_code);
+        qrCodeTV = findViewById(R.id.qr_code2);
         auth = FirebaseAuth.getInstance();
         realtimeDatabase = FirebaseDatabase.getInstance();
         rtDatabaseReference = realtimeDatabase.getReference();
         progress = new ProgressDialog(this);
         service_btn = findViewById(R.id.service_btn);
+        scan_btn = (FloatingActionButton) findViewById(R.id.scan_btn);
+
+        scan_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final AlertDialog.Builder alert_dialog = new AlertDialog.Builder(MainActivity.this);
+                alert_dialog.setTitle("Your Qr Code");
+                alert_dialog.setNegativeButton("Back", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                });
+                View view1 = getLayoutInflater().inflate(R.layout.qrcode,null);
+                ImageView qr = (ImageView) view1.findViewById(R.id.qr_code2);
+                qr.setImageBitmap(qrCode);
+                alert_dialog.setView(view1);
+                AlertDialog dialog = alert_dialog.create();
+                dialog.show();
+            }
+        });
 
 
         service_btn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -92,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         Paper.init(this);
-
 
 //        Button btn2 = findViewById(R.id.button3);
 //        btn2.setOnClickListener(new View.OnClickListener() {
@@ -279,7 +303,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateUI(FirebaseUser user) {
-        Bitmap qrCode;
+        //Bitmap qrCode;
         if (user != null) {
             int user_status = Paper.book("user_status").read("user_status", 0);
             if (user_status == 2) {
@@ -292,17 +316,17 @@ public class MainActivity extends AppCompatActivity {
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
             }
 
-            qrCodeTV.setImageBitmap(qrCode);
+          //  qrCodeTV.setImageBitmap(qrCode);
         }
     }
 
     private void changeStatus(FirebaseUser user) {
-        Bitmap qrCode;
+       // Bitmap qrCode;
         if (user != null) {
             qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
             Paper.book("user_status").write("user_status", 2);
             //Bitmap qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
-            qrCodeTV.setImageBitmap(qrCode);
+          //  qrCodeTV.setImageBitmap(qrCode);
             List<String> allDays = Paper.book("days").read("availableDays", new ArrayList<String>());
             String autoGenKey = rtDatabaseReference.child("confirmed-cases").push().getKey();
             Map<String, Object> childUpdates = new HashMap<>();
@@ -377,8 +401,8 @@ public class MainActivity extends AppCompatActivity {
                                 Long timestamp = Long.valueOf(location.getKey());
                                 Log.d("test", String.valueOf(possibleInfection(loc, new LocationToSave(lat, lon, timestamp))));
                                 if (possibleInfection(loc, new LocationToSave(lat, lon, timestamp))) {
-                                    Bitmap qrCode = QRCode.from(auth.getCurrentUser().getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
-                                    qrCodeTV.setImageBitmap(qrCode);
+                                   /* Bitmap*/ qrCode = QRCode.from(auth.getCurrentUser().getUid()).withSize(700, 700).withColor(YELLOW, 0xFFFFFFFF).bitmap();
+                                   // qrCodeTV.setImageBitmap(qrCode);
                                     Paper.book("user_status").write("user_status", 1);
                                     getNotificationId();
                                     progress.dismiss();
