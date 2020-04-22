@@ -167,14 +167,21 @@ public class MainActivity extends AppCompatActivity {
             rtDatabaseReference.child(auth.getCurrentUser().getUid()).addChildEventListener(new ChildEventListener() {
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                    if(!eventFlag){
-                        Log.d("FLAG","Added");
-                        int user_status = Paper.book("user_status").read("user_status", 0);
-                        if(user_status != 2){
-                            changeStatus(auth.getCurrentUser());
+                    try{
+                        long val = (long) dataSnapshot.getValue();
+                        if(!eventFlag && val == 1){
+                            Log.d("FLAG","Added");
+                            int user_status = Paper.book("user_status").read("user_status", 0);
+                            if(user_status != 2){
+                                changeStatus(auth.getCurrentUser());
+                            }
+                            eventFlag = true;
                         }
-                        eventFlag = true;
+
+                    }catch (Exception e){
+
                     }
+
                 }
 
                 @Override
@@ -220,13 +227,19 @@ public class MainActivity extends AppCompatActivity {
                             rtDatabaseReference.child(auth.getCurrentUser().getUid()).addChildEventListener(new ChildEventListener() {
                                 @Override
                                 public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                                    if(!eventFlag){
-                                        Log.d("FLAG","Added");
-                                        int user_status = Paper.book("user_status").read("user_status", 0);
-                                        if(user_status != 2){
-                                            changeStatus(auth.getCurrentUser());
+                                    try{
+                                        long val = (long) dataSnapshot.child("l").getValue();
+                                        if(!eventFlag && val == 1){
+                                            Log.d("FLAG","Added");
+                                            int user_status = Paper.book("user_status").read("user_status", 0);
+                                            if(user_status != 2){
+                                                changeStatus(auth.getCurrentUser());
+                                            }
+                                            eventFlag = true;
                                         }
-                                        eventFlag = true;
+
+                                    }catch (Exception e){
+
                                     }
                                 }
 
@@ -270,6 +283,8 @@ public class MainActivity extends AppCompatActivity {
         if (user != null) {
             int user_status = Paper.book("user_status").read("user_status", 0);
             if (user_status == 2) {
+                btn3.setVisibility(View.GONE);
+                service_btn.setVisibility(View.GONE);
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(RED, 0xFFFFFFFF).bitmap();
             } else if (user_status == 0) {
                 qrCode = QRCode.from(user.getUid()).withSize(700, 700).withColor(BLACK, 0xFFFFFFFF).bitmap();

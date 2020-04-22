@@ -76,7 +76,7 @@ public class Fcmhandler extends  FirebaseMessagingService {
                                 Log.d("test", String.valueOf(possibleInfection(loc, new LocationToSave(lat, lon, timestamp))));
                                 if (possibleInfection(loc, new LocationToSave(lat, lon, timestamp))) {
                                     Paper.book("user_status").write("user_status", 1);
-                                        getNotificationId();
+                                    getNotificationId();
                                     return;
                                 }
                             }
